@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notes</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 3rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.5rem; }
+    form { display: flex; gap: .5rem; margin: 1rem 0; }
+    input { flex: 1; padding: .5rem; font-size: 1rem; }
+    button { padding: .5rem .9rem; font-size: 1rem; cursor: pointer; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: .5rem 0; border-bottom: 1px solid #ddd; }
+    li button { background: none; border: none; color: #c00; font-size: 1.1rem; }
+    ul { list-style: none; padding: 0; }
+  </style>
+</head>
+<body>
+  <h1>Notes</h1>
+  <form id="note-form">
+    <input id="note-text" placeholder="Write a note..." autocomplete="off" required>
+    <button type="submit">Add</button>
+  </form>
+  <ul id="note-list"></ul>
+
+  <script>
+    const list = document.getElementById("note-list");
+    const form = document.getElementById("note-form");
+    const input = document.getElementById("note-text");
+
+    // The frontend calls /api/... on the SAME host; the ingress routes
+    // /api to the backend service, / to this frontend.
+    async function load() {
+      const res = await fetch("/api/notes");
+      const notes = await res.json();
+      list.innerHTML = "";
+      for (const n of notes) {
+        const li = document.createElement("li");
+        li.textContent = n.text;
+        const del = document.createElement("button");
+        del.textContent = "×";
+        del.onclick = () => remove(n.id);
+        li.appendChild(del);
+        list.appendChild(li);
+      }
+    }
+
+    async function remove(id) {
+      await fetch(`/api/notes/${id}`, { method: "DELETE" });
+      load();
+    }
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: input.value }),
+      });
+      input.value = "";
+      load();
+    };
+
+    load();
+  </script>
+</body>
+</html>

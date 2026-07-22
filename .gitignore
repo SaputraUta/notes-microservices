@@ -1,0 +1,10 @@
+# Go build output
+notes-backend
+*.exe
+
+# OS
+.DS_Store
+
+# local env / secrets (never commit)
+*.env
+.env
